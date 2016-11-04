@@ -43,10 +43,10 @@ function generateVis() {
     });
 
     var imageWidth = 50;
-    var imageHeight = 150;
+    var imageHeight = imageWidth*(321/212);
     var imageVerticalPadding = 20;
 
-    var formatTime = d3.time.format("%e %B %Y");
+    var formatTime = d3.time.format("%d %b %Y");
 
     var lowestDate = d3.min(data, function (d) {
         return d.date;
