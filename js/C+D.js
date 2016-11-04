@@ -13,7 +13,10 @@ var data = [];
 
 var csvs = [
     {term: 'inhaler', url: '../data/inhaler.csv'},
-    {term: 'potters', url: '../data/potters.csv'}
+    {term: 'inhaler_illustration', url: '../data/inhaler_illustration.csv'},
+    {term: 'inhaler_asthma', url: '../data/inhaler_asthma.csv'},
+    {term: 'potter', url: '../data/potter.csv'},
+    {term: 'asthma', url: '../data/asthma-images-dates.csv'}
 ];
 
 csvs.forEach(function(item, index) {
@@ -23,7 +26,7 @@ csvs.forEach(function(item, index) {
         var parser = d3.time.format.utc("%Y-%m-%dT%H:%M:%S");
         var prevDate;
 
-        dataset.forEach(function (d) {
+        dataset.forEach(function (d, i) {
             d.term = item.term;
             d.date = parser.parse(d["date"]);
             if (prevDate && d.date.toString() === prevDate.toString()) {
@@ -31,7 +34,9 @@ csvs.forEach(function(item, index) {
             }
             d.month = 0;
             d.day = 0;
-            d.imgurl = d["imgurl"];
+            d.blob = '../images/' + item.term + '.svg';
+            d.imageurl = d.imgurl;
+
             prevDate = d.date;
 
             data.push(d);
@@ -243,7 +248,7 @@ function generateVis() {
 
     var images = node.append('svg:image')
         .attr('xlink:href', function (d) {
-            return d.imgurl;
+            return d.blob;
         })
         .attr('data', function (d) {
             return d.date;
@@ -253,15 +258,19 @@ function generateVis() {
         })
         .call(rectDimensions)
         .on("mouseover", function (d) {
+            console.log(d.tooltipUrl);
             div.transition()
                 .duration(500)
                 .style("opacity", 0);
             div.transition()
                 .duration(200)
                 .style("opacity", .9);
-            div.html(formatTime(d.date))
+            div.html('<img src="' + d.imageurl + '" />')
                 .style("left", (d3.event.pageX) + "px")
                 .style("top", (d3.event.pageY - 28) + "px");
+            // div.html(formatTime(d.date))
+            //     .style("left", (d3.event.pageX) + "px")
+            //     .style("top", (d3.event.pageY - 28) + "px");
         })
         .on("mouseout", function (d) {
             div.transition().duration(100).style("opacity", 0)
@@ -298,6 +307,9 @@ jQuery(document).on('click', '.toggler', function(event) {
         $nodes.attr('data-active', 'true');
         $toggler.addClass('is-active');
     }
+});
 
-
+jQuery(document).on('click', '.toggle-transparent', function(event) {
+    jQuery(this).toggleClass('is-active');
+    jQuery('body').toggleClass('is-transparent');
 });
