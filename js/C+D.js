@@ -9,34 +9,43 @@ Olivia Vane
 // Prevents jQuery and D3 clashing
 jQuery.noConflict();
 
-var data;
+var data = [];
 
-d3.csv("../data/inhaler.csv", function (error, dataset) {
+var csvs = [
+    {term: 'inhaler', url: '../data/inhaler.csv'},
+    {term: 'potters', url: '../data/potters.csv'}
+];
 
-    if (error) { //If error is not null, something went wrong.
-        console.log(error); //Log the error.
-    } else { //If no error, process dataset here
+csvs.forEach(function(item, index) {
+    d3.csv(item.url, function(err, dataset) {
+        if (err) throw err;
 
         var parser = d3.time.format.utc("%Y-%m-%dT%H:%M:%S");
+        var prevDate;
 
         dataset.forEach(function (d) {
+            d.term = item.term;
             d.date = parser.parse(d["date"]);
+            if (prevDate && d.date.toString() === prevDate.toString()) {
+                d.multiple = true;
+            }
             d.month = 0;
             d.day = 0;
             d.imgurl = d["imgurl"];
+            prevDate = d.date;
+
+            data.push(d);
         });
 
-        //Execute after successful file load here
-        data = dataset;
-        generateVis();
-    }
+        if (index === csvs.length - 1) {
+            generateVis();
+        }
+    });
 });
 
 
+
 function generateVis() {
-
-    console.log(data);
-
     data.forEach(function (d) {
         d.month = d.date.getMonth() + 1;
         d.day = d.date.getDate();
@@ -51,11 +60,11 @@ function generateVis() {
     var lowestDate = d3.min(data, function (d) {
         return d.date;
     });
-    console.log("lowest date = " + lowestDate);
+    // console.log("lowest date = " + lowestDate);
     var highestDate = d3.max(data, function (d) {
         return d.date;
     });
-    console.log("highest date = " + highestDate);
+    // console.log("highest date = " + highestDate);
 
     var margin = {
             top: 0,
@@ -222,9 +231,13 @@ function generateVis() {
     var node = main.selectAll('.node')
         .data(data)
         .enter().append('g')
-        .attr('class', 'node');
+        .attr('class', function(d) {
+            var multi = d.multiple ? ' multi' : '';
 
-    //rects used to border images as svg images have no stroke attr
+            return "node " + d.term + multi;
+        });
+
+    // rects used to border images as svg images have no stroke attr
 
     var horizontalPadding = 5;
 
@@ -234,6 +247,9 @@ function generateVis() {
         })
         .attr('data', function (d) {
             return d.date;
+        })
+        .attr('multi', function(d) {
+            if (d.multiple) return 'true';
         })
         .call(rectDimensions)
         .on("mouseover", function (d) {
@@ -263,8 +279,25 @@ function generateVis() {
     }
 
     var div = d3.select("body")
-        .append("div") // declare the tooltip div 
+        .append("div") // declare the tooltip div
         .attr("class", "tooltip") // apply the 'tooltip' class
         .style("opacity", 0); // set the opacity to nil
 
 }
+
+
+jQuery(document).on('click', '.toggler', function(event) {
+    var $toggler = jQuery(this);
+    var attrName = jQuery(this).attr('data-class');
+    var $nodes = jQuery('.node.' + attrName);
+
+    if (jQuery($nodes[0]).attr('data-active') === 'true') {
+        $nodes.attr('data-active', 'false');
+        $toggler.removeClass('is-active');
+    } else {
+        $nodes.attr('data-active', 'true');
+        $toggler.addClass('is-active');
+    }
+
+
+});
